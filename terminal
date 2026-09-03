@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            color: #000000;
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .terminal {
+            background-color: #ffffff;
+            border: 3px solid #ff4500;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(255, 69, 0, 0.3);
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            border-bottom: 2px solid #ff4500;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff4500;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-left span:first-child {
+            font-size: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-btn {
+            background: none;
+            border: 1px solid #ff4500;
+            color: #ff4500;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .admin-btn:hover {
+            background: #ff4500;
+            color: white;
+        }
+
+        .admin-btn.active {
+            background: #ff4500;
+            color: white;
+        }
+
+        #counter {
+            color: #ff4500;
+            font-weight: bold;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .messages::-webkit-scrollbar-track {
+            background: #e0e0e0;
+        }
+        .messages::-webkit-scrollbar-thumb {
+            background: #ff4500;
+            border-radius: 4px;
+        }
+
+        .message {
+            border-left: 4px solid #ff4500;
+            padding-left: 12px;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            background: #ffffff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            word-wrap: break-word;
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0.3; transform: translateX(-5px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message .nick {
+            color: #ff4500;
+            font-weight: bold;
+        }
+        .message .nick::before {
+            content: "[";
+        }
+        .message .nick::after {
+            content: "] ";
+        }
+        
+        .message .time {
+            color: #888888;
+            font-size: 11px;
+            margin-right: 10px;
+        }
+        
+        .message .text {
+            color: #000000;
+            word-break: break-word;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff0000;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 8px;
+            opacity: 0;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .message:hover .delete-btn {
+            opacity: 0.7;
+        }
+        .delete-btn:hover {
+            opacity: 1 !important;
+            transform: scale(1.2);
+        }
+
+        .input-area {
+            border-top: 2px solid #ff4500;
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-row input {
+            background: #ffffff;
+            border: 2px solid #cccccc;
+            color: #000000;
+            padding: 10px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            outline: none;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .input-row input:focus {
+            border-color: #ff4500;
+            box-shadow: 0 0 10px rgba(255, 69, 0, 0.2);
+        }
+
+        #nickInput {
+            width: 20%;
+            min-width: 80px;
+        }
+
+        #msgInput {
+            flex: 1;
+        }
+
+        #sendBtn {
+            background: #ff4500;
+            color: #ffffff;
+            border: none;
+            padding: 10px 30px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            letter-spacing: 1px;
+        }
+
+        #sendBtn:hover {
+            background: #cc3700;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+            transform: scale(1.02);
+        }
+
+        #sendBtn:active {
+            transform: scale(0.95);
+        }
+
+        .hint {
+            color: #888888;
+            font-size: 11px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            border: 3px solid #ff4500;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #ff4500;
+            margin-bottom: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #cccccc;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .modal-content input:focus {
+            border-color: #ff4500;
+            outline: none;
+        }
+
+        .modal-content button {
+            background: #ff4500;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background: #cc3700;
+        }
+
+        .modal-content .close-modal {
+            background: #888;
+            margin-left: 10px;
+        }
+
+        .modal-content .close-modal:hover {
+            background: #666;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .header-right {
+                justify-content: space-between;
+            }
+            .input-row {
+                flex-wrap: wrap;
+            }
+            #nickInput {
+                width: 100%;
+            }
+            #sendBtn {
+                width: 100%;
+            }
+            .message {
+                flex-wrap: wrap;
+            }
+            .delete-btn {
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="terminal">
+    <div class="header">
+        <div class="header-left">
+            <span>🔥 TERMINAL v2.0</span>
+            <span id="counter">0 сообщений</span>
+        </div>
+        <div class="header-right">
+            <button class="admin-btn" id="adminToggleBtn">🔑 Войти как админ</button>
+        </div>
+    </div>
+
+    <div class="messages" id="messageContainer"></div>
+
+    <div class="input-area">
+        <div class="input-row">
+            <input type="text" id="nickInput" placeholder="Твой ник" value="Аноним" maxlength="20">
+            <input type="text" id="msgInput" placeholder="Введите сообщение..." autofocus>
+            <button id="sendBtn">➤ ОТПРАВИТЬ</button>
+        </div>
+        <div class="hint">[ Enter — отправить. Админ может удалять сообщения ]</div>
+    </div>
+</div>
+
+<div class="modal" id="adminModal">
+    <div class="modal-content">
+        <h2>🔑 Вход для админа</h2>
+        <p style="color: #666; margin-bottom: 15px;">Введите пароль для управления чатом</p>
+        <input type="password" id="adminPassword" placeholder="Введите пароль">
+        <div>
+            <button id="adminLoginBtn">Войти</button>
+            <button class="close-modal" id="adminModalClose">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const messageContainer = document.getElementById('messageContainer');
+    const nickInput = document.getElementById('nickInput');
+    const msgInput = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const counter = document.getElementById('counter');
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
+    const adminModal = document.getElementById('adminModal');
+    const adminPassword = document.getElementById('adminPassword');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminModalClose = document.getElementById('adminModalClose');
+
+    const STORAGE_KEY = 'terminal_chat_messages_v2';
+    let isAdmin = false;
+    const ADMIN_PASSWORD = 'admin123';
+
+    function loadMessages() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                const messages = JSON.parse(stored);
+                messages.forEach(msg => addMessageToDOM(msg.nick, msg.text, msg.time, false, msg.id));
+            } catch (e) {}
+        }
+    }
+
+    function addMessageToDOM(nick, text, time, saveToStorage = true, id = null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'message';
+        if (!id) id = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        msgDiv.dataset.id = id;
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'time';
+        timeSpan.textContent = time || getCurrentTime();
+
+        const nickSpan = document.createElement('span');
+        nickSpan.className = 'nick';
+        nickSpan.textContent = nick || 'Аноним';
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'text';
+        textSpan.textContent = text;
+
+        content.appendChild(timeSpan);
+        content.appendChild(nickSpan);
+        content.appendChild(textSpan);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = '✕';
+        deleteBtn.title = 'Удалить сообщение (только админ)';
+        deleteBtn.style.display = isAdmin ? 'block' : 'none';
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteMessage(msgDiv, id);
+        });
+
+        msgDiv.appendChild(content);
+        msgDiv.appendChild(deleteBtn);
+
+        messageContainer.appendChild(msgDiv);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+
+        if (saveToStorage) {
+            saveMessageToStorage(nick, text, timeSpan.textContent, id);
+        }
+
+        updateCounter();
+        return msgDiv;
+    }
+
+    function deleteMessage(element, id) {
+        if (!isAdmin) {
+            alert('Только админ может удалять сообщения!');
+            return;
+        }
+        if (confirm('Удалить это сообщение?')) {
+            element.remove();
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    let messages = JSON.parse(stored);
+                    messages = messages.filter(msg => msg.id !== id);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+                } catch (e) {}
+            }
+            updateCounter();
+        }
+    }
+
+    function saveMessageToStorage(nick, text, time, id) {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        let messages = [];
+        if (stored) {
+            try {
+                messages = JSON.parse(stored);
+            } catch (e) {}
+        }
+        messages.push({ nick, text, time, id });
+        if (messages.length > 500) messages = messages.slice(-500);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+
+    function updateCounter() {
+        const count = messageContainer.children.length;
+        let word = 'сообщений';
+        if (count % 10 === 1 && count % 100 !== 11) word = 'сообщение';
+        else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) word = 'сообщения';
+        counter.textContent = `${count} ${word}`;
+    }
+
+    function getCurrentTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    function sendMessage() {
+        let nick = nickInput.value.trim() || 'Аноним';
+        const text = msgInput.value.trim();
+        if (!text) { msgInput.focus(); return; }
+        addMessageToDOM(nick, text, getCurrentTime(), true);
+        msgInput.value = '';
+        msgInput.focus();
+    }
+
+    function toggleAdminMode() {
+        if (isAdmin) {
+            isAdmin = false;
+            adminToggleBtn.textContent = '🔑 Войти как админ';
+            adminToggleBtn.classList.remove('active');
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'none');
+        } else {
+            adminModal.style.display = 'flex';
+            adminPassword.value = '';
+            adminPassword.focus();
+        }
+    }
+
+    function loginAdmin() {
+        if (adminPassword.value === ADMIN_PASSWORD) {
+            isAdmin = true;
+            adminToggleBtn.textContent = '🚪 Выйти из админки';
+            adminToggleBtn.classList.add('active');
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'block');
+            adminModal.style.display = 'none';
+            alert('✅ Вы вошли как администратор!');
+        } else {
+            alert('❌ Неверный пароль!');
+            adminPassword.value = '';
+            adminPassword.focus();
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    msgInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+    });
+    nickInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') msgInput.focus();
+    });
+
+    adminToggleBtn.addEventListener('click', toggleAdminMode);
+    adminLoginBtn.addEventListener('click', loginAdmin);
+    adminModalClose.addEventListener('click', () => adminModal.style.display = 'none');
+    adminPassword.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') loginAdmin();
+    });
+    window.addEventListener('click', (e) => {
+        if (e.target === adminModal) adminModal.style.display = 'none';
+    });
+
+    loadMessages();
+    if (messageContainer.children.length === 0) {
+        addMessageToDOM('SYSTEM', 'Добро пожаловать в Terminal v2.0!', getCurrentTime(), true);
+    }
+    msgInput.focus();
+    console.log('✅ Terminal v2.0 запущен!');
+</script>
+</body>
+</html>
